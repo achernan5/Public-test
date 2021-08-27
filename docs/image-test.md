@@ -7,3 +7,7 @@ The beginning of an awesome article...
 
 
 
+![Screen Shot 2021-08-25 at 5.32.32 PM.png](https://stoplight.io/api/v1/projects/cHJqOjgyMDAx/images/OxLYf3Bjx2M)
+
+
+
