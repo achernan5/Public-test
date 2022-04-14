@@ -1,0 +1,1946 @@
+swagger: '2.0'
+info:
+  version: ''
+  title: Payout API
+  description: |-
+    REST APIs supporting Payoneer's Mass Payout service that address:
+    * Payee registration
+    * Payout submission
+    * Reporting 
+    * Webhooks
+  contact:
+    name: 'Payoneer integration team '
+    email: integration@payoneer.com
+schemes: []
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  '/programs/{program_id}/payees/registration-link':
+    parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties: {}
+      - name: program_id
+        in: path
+        type: string
+        required: true
+    post:
+      operationId: registration
+      summary: Create Registration Link
+      tags:
+        - On-boarding Payees
+      description: |
+        Requests a unique URL for the payee to on-board Payoneer. The request connects the payee to the client for receiving payouts. Payee registration pages can be pre-populated with select data elements submitted in the request.  
+
+        > **Notes:**
+        > 
+        > - Please refer to [Field Validations](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI2-field-validations) in the reference section.
+        > - The returned URL is valid for a single payee registration.
+        > - The URL link is retained for a period to allow payees to update selected data elements if required, following form submission.
+        > - To setup landing site language, please refer to [language setup](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjMw-language-codes) in the reference section.
+
+        ### To Enable User to Connect Existing Payoneer Acocunt
+        If the user already has a Payoneer account, utilize the "already_have_an_account" parameter (=true) to requests a unique URL for connecting a payee to the client for receiving payouts. 
+
+        A unique sign-up URL is generated and returned by Payoneer for the payee sign-up session. In cases that a payee already has a Payoneer account, the payee will be prompted to link the account to the client's program.
+
+        > **Notes:**
+        > * The URL returned is valid for a single payee registration.
+        > * This URL is **not** supported in an iFrame window.
+
+        *In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            example:
+              payee_id: elitestInd
+              client_session_id: partnersessionid
+              redirect_url: 'http://payoneer.com'
+              redirect_time: 5
+              payout_methods_list:
+                - BANK
+              registration_ mode: LIMITED
+              lock_type: NONE
+              payee:
+                type: COMPANY
+                company:
+                  legal_type: PRIVATE
+                  name: PAYONEER
+                  url: 'http://company.com'
+                  incorporated_state: NY
+                  incorporated_country: US
+                contact:
+                  first_name: John
+                  last_name: Doe
+                  email: john.doe@nowhere.com
+                  date_of_birth: '1990-02-12'
+                  phone_country: IL
+                  mobile: '054123123123'
+                  phone: '02123123123'
+                address:
+                  address_line_1: 101 Broadway AVE
+                  address_line_2: Floor 5
+                  city: NY
+                  state: NY
+                  country: US
+                  zip_code: '10001'
+              payout_method:
+                bank_name: Bank of America
+                bank_code: '25456456845684568'
+                branch_name: New York
+                branch_code: '35614'
+                account_name: Checking YHDG
+                account_number: '6584564568'
+                swift_bic: '325645645646'
+                iban: '564564541654'
+                bank_number: '13245664'
+                bic: '654561463549685'
+                id_number: '6549568456149685'
+                prov_state: NY
+                city: New York
+                postal_code: '12345'
+                address: 100 Broadway AVE
+                account_type: Checking
+                account_name_english: John
+            properties:
+              client_session_id:
+                type: string
+                description: Unique identifier of the session that will be referenced in Web Hooks sent for the specific payee
+                maxLength: 50
+              payee_id:
+                type: string
+                description: Unique identifier of the payee on the client's platform
+              redirect_url:
+                type: string
+                description: "The URL for redirecting the payee upon completion of registration, the URL can contain below parameters. \n\nExample: https://www.payoneer.com/{{apuid}}/{{sessionid}}/{{payoneerid}}\n\n|**Parameter** |\t**Description** |\n|---|---|\n|apuid|\t(payee ID) References the unique identifier established by the client for each payee.|\n|sessionid|\tReferences the “client_session_id” parameter sent in the register payee API. It is not mandatory.|\n|payoneerId| Unique\tidentifier on Payoneer's platform assigned to each Payment Notification.|"
+                format: uri
+              redirect_time:
+                type: integer
+                default: 10
+                description: 'Interval in seconds after completion of registration, before redirecting the payee back to the client'
+              payout_methods:
+                type: array
+                description: Optional
+                enum:
+                  - BankTransfer
+                  - PrepaidCard
+                items:
+                  type: string
+              lock_type:
+                type: string
+                default: NONE
+                description: |
+                  Enables locking some or all pre-populated fields from being edited by the payee while completing registration forms (Please refer to [Lock Type Table](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjMx-registration-lock-type))
+                enum:
+                  - NONE
+                  - ALL
+                  - ADDRESS
+                  - NAMES
+                  - EMAIL
+                  - NAME_ADDRESS_EMAIL
+                  - DATE_OF_BIRTH
+                  - ALL_NAMES
+                  - ALL_NAMES_ADDRESS_EMAIL
+                  - ENTITY_NAME_COUNTRY_ID
+                  - COMPANY
+                  - NAMES_COUNTRY
+                  - ACCOUNT_TYPE_AND_COUNTRY
+              payee_data_matching_type:
+                type: string
+                default: NONE
+                description: |
+                  Check againist specific values with the existing Payoneer user when “Payee Entity Matching Type” value is sent in the API
+                  (Please refer to [Payee Data Entity Matching Table](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjMy-payee-entity-matching-type))
+                  Additional entity matching values can be requested.
+                enum:
+                  - ALL
+                  - ADDRESS
+                  - NAMES
+                  - EMAIL
+                  - NAME_ADDRESS_EMAIL
+                  - DATE_OF_BIRTH
+                  - ALL_NAMES
+                  - ALL_NAMES_ADDRESS_EMAIL
+                  - ENTITY_NAME_COUNTRY_ID
+                  - NAMES_COUNTRY
+                  - ACCOUNT_TYPE_AND_COUNTRY
+              already_have_an_account:
+                type: string
+                enum:
+                  - true
+                  - 'False'
+                default: false
+                description: 'True: It will open the registration link in log-in window for existing Payoneer user to connect (does not support iframe)'
+              payee:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - INDIVIDUAL
+                      - COMPANY
+                    description: |
+                      Type of payee
+                  company:
+                    type: object
+                    properties:
+                      legal_type:
+                        type: string
+                        description: |
+                          Type of legal entity
+                        enum:
+                          - PUBLIC
+                          - PRIVATE
+                          - SOLE PROPRIETORSHIP
+                          - LLC
+                          - LLP
+                          - LTD
+                          - INC
+                          - NON PROFIT
+                          - TRUST
+                      name:
+                        type: string
+                        description: Company name
+                      url:
+                        type: string
+                        format: uri
+                        description: Link to company web site
+                      incorporated_country:
+                        type: string
+                        description: Country that company is incorporated in
+                      incorporated_state:
+                        type: string
+                        description: State that company is incorporated in
+                  contact:
+                    type: object
+                    description: Official company contact person
+                    properties:
+                      first_name:
+                        type: string
+                        description: Contact first name
+                      last_name:
+                        type: string
+                        description: Contact last name
+                      email:
+                        type: string
+                        format: email
+                        description: Contact email address
+                      date_of_birth:
+                        type: string
+                        description: |-
+                          Contact date of birth 
+                          Format: YYYY-MM-DD
+                        pattern: YYYY-MM-DD
+                        format: date
+                      mobile:
+                        type: string
+                        description: Contact mobile phone number
+                  address:
+                    type: object
+                    description: Address of individual or company
+                    properties:
+                      country:
+                        type: string
+                        description: Country of residence
+                        minLength: 2
+                        maxLength: 2
+                      state:
+                        type: string
+                        description: State
+                        minLength: 2
+                        maxLength: 2
+                      address_line_1:
+                        type: string
+                        description: First address line
+                      address_line_2:
+                        type: string
+                        description: Second address line
+                      city:
+                        type: string
+                        description: City
+                      zip_code:
+                        type: string
+                        description: Zip code
+                  id_document:
+                    type: object
+                    description: 'Required fields will differ according to payee country, id document type, and payee type(individual or company). '
+                    properties:
+                      type:
+                        type: string
+                        description: (Required if id_document object is passed) ID document type
+                        enum:
+                          - SSN
+                          - DriverLicense
+                          - ForeignId
+                          - Passport
+                          - EIN
+                          - MyNumber
+                          - ITIN
+                          - GIIN
+                          - CompanyRegistrationNumber
+                          - UnifiedSocialCreditCode
+                          - DomesticPassport
+                      issue_country:
+                        type: string
+                        minLength: 2
+                        maxLength: 2
+                        description: (Required if id_document object is passed) ISO 2 3166 country code
+                      number:
+                        type: string
+                        minLength: 1
+                        maxLength: 30
+                        pattern: '^[a-zA-Z0-9]'
+                        description: (Required if id_document object is passed) ID Number
+                      issue_date:
+                        type: string
+                        description: (Required based on different country/ID type/account type combination) ID issuance date
+                      expiration_date:
+                        type: string
+                        description: (Required based on different country/ID type/account type combination) ID expiration date
+                      first_name_in_local_language:
+                        type: string
+                        description: (Required based on different country/ID type/account type combination) First name in local language
+                      last_name_in_local_language:
+                        type: string
+                        description: (Required based on different country/ID type/account type combination)Last name in local language
+              language_id:
+                type: string
+                description: 'Specify the registration URL to open with a specific language. See [**Language Code**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjMw-language-codes) for more details'
+                minLength: 1
+                maxLength: 2
+              payout_method:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: Must be "Bank Transfer"
+                    enum:
+                      - BankTransfer
+                  bank_account_type:
+                    type: string
+                    enum:
+                      - 1
+                      - 2
+                    minLength: 1
+                    maxLength: 1
+                    description: |-
+                      Bank Acount Type
+
+                      1 - Personal
+
+                      2 - Company
+                  country:
+                    type: string
+                    description: Bank Account Country - ISO2-3166
+                    minLength: 2
+                    maxLength: 2
+                  currency:
+                    type: string
+                    description: Bank Account Currency
+                    minLength: 3
+                    maxLength: 3
+                  bank_field_details:
+                    type: array
+                    description: 'Fields required for registering a payee’s bank account. Required fields will differ according to bank account country, currency and type of payee (individual or company). Below are some of the fields submitted when registering bank accounts. Clients can call the bank/registration-fields API to determine the appropriate banking fields for the payee''s country,currency and account type before submitting the registration-link request'
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+            required:
+              - payee_id
+          x-examples:
+            Pre-populate Payee Data (Individual):
+              payee_id: test4564544
+              client_session_id: sessionid0002
+              redirect_url: 'http://partner.com'
+              redirect_time: '5'
+              lock_type: ''
+              payee_data_matching_type: ''
+              already_have_an_account: false
+              language_id: '1'
+              payout_methods:
+                - BankTransfer
+              payee:
+                type: Individual
+                contact:
+                  first_name: John
+                  last_name: Doe
+                  email: PayeeID031821V45ZZZ1@mailinator.com
+                  date_of_birth: '1999-09-09'
+                  mobile: '4145551235'
+                  mobile_country: US
+                  phone: '4145551234'
+                  phone_country: US
+                  nationality: US
+                id_document:
+                  type: SSN
+                  number: '123456789'
+                  issue_country: US
+                  name_on_id: ''
+                  expiration_date: ''
+                  IssueDate: ''
+                  first_name_in_local_language: ''
+                  last_name_in_local_language: ''
+                address:
+                  address_line_1: 1505 Main St.
+                  address_line_2: ''
+                  city: Milwaukee
+                  state: WI
+                  country: US
+                  zip_code: '53201'
+                company:
+                  name: ''
+                  url: ''
+                  incorporated_country: ''
+                  incorporated_state: ''
+                  incorporated_address_1: ''
+                  incorporated_address_2: ''
+                  incorporated_city: ''
+                  incorporated_zipcode: ''
+                  legal_type: ''
+              payout_method:
+                type: BankTransfer
+                bank_account_type: '1'
+                country: US
+                currency: USD
+                bank_field_details:
+                  - name: AccountNumber
+                    value: '8276019671'
+                  - name: AccountName
+                    value: John Smith
+                  - name: BankName
+                    value: Bank of Hope
+                  - name: RoutingNumber
+                    value: '122105155'
+                  - name: AccountType
+                    value: S
+            Pre-populate Payee Data (Company):
+              payee_id: test4564546
+              client_session_id: sessionid0001
+              redirect_url: 'http://partner.com'
+              redirect_time: '5'
+              lock_type: ''
+              payee_data_matching_type: ''
+              already_have_an_account: false
+              language_id: '1'
+              payout_methods:
+                - BankTransfer
+              payee:
+                type: COMPANY
+                contact:
+                  first_name: John
+                  last_name: Doe
+                  email: PayeeID0318213V45ZZZ1@mailinator.com
+                  date_of_birth: '1999-09-09'
+                  mobile: '4145551235'
+                  mobile_country: US
+                  phone: '4145551234'
+                  phone_country: US
+                  nationality: US
+                id_document:
+                  type: EIN
+                  number: '987654321'
+                  issue_country: US
+                  name_on_id: ''
+                  expiration_date: ''
+                  IssueDate: ''
+                  first_name_in_local_language: ''
+                  last_name_in_local_language: ''
+                address:
+                  address_line_1: 1509 Main St.
+                  address_line_2: ''
+                  city: Milwaukee
+                  state: WI
+                  country: US
+                  zip_code: '53201'
+                company:
+                  name: Venus Ltd
+                  legal_type: LTD
+                  url: ''
+                  incorporated_country: ''
+                  incorporated_state: ''
+                  incorporated_address_1: ''
+                  incorporated_address_2: ''
+                  incorporated_city: ''
+                  incorporated_zipcode: ''
+              payout_method:
+                type: BankTransfer
+                bank_account_type: '2'
+                country: US
+                currency: USD
+                bank_field_details:
+                  - name: AccountNumber
+                    value: '8276019671'
+                  - name: AccountName
+                    value: Venus LTD
+                  - name: BankName
+                    value: Bank of Hope
+                  - name: RoutingNumber
+                    value: '122105155'
+                  - name: AccountType
+                    value: C
+            With Entity Matching:
+              payee_id: test4564544
+              client_session_id: sessionid_0001
+              redirect_url: 'http://partner.com'
+              redirect_time: '5'
+              lock_type: ''
+              tax_lock_type: ''
+              payee_data_matching_type: NAMES
+              already_have_an_account: true
+              language_id: '1'
+              payee:
+                type: Individual
+                contact:
+                  first_name: John
+                  last_name: Doe
+                  email: PayeeID031821V45ZZZ1@mailinator.com
+                  date_of_birth: '1999-09-09'
+                  mobile: '4145551235'
+                  mobile_country: US
+                  phone: '4145551234'
+                  phone_country: US
+                  nationality: US
+                id_document:
+                  type: SSN
+                  number: '123456789'
+                  issue_country: US
+                  name_on_id: ''
+                  expiration_date: ''
+                  IssueDate: ''
+                  first_name_in_local_language: ''
+                  last_name_in_local_language: ''
+                address:
+                  address_line_1: 1505 Main St.
+                  address_line_2: ''
+                  city: Milwaukee
+                  state: WI
+                  country: US
+                  zip_code: '53201'
+                company:
+                  name: ''
+                  url: ''
+                  incorporated_country: ''
+                  incorporated_state: ''
+                  incorporated_address_1: ''
+                  incorporated_address_2: ''
+                  incorporated_city: ''
+                  incorporated_zipcode: ''
+                  australian_business_number: ''
+                  legal_type: ''
+          description: ''
+      responses:
+        '200':
+          description: ''
+          examples:
+            application/json:
+              result:
+                token: 7293f06a1d524e6f80a4f0f414b0f0962010B7745A
+                registration_link: 'http://payouts.sandbox.payoneer.com/partners/lp.aspx?token=7293f06a1d524e6f80a4f0f414b0f0962010B7745A'
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                result:
+                  token: 7293f06a1d524e6f80a4f0f414b0f0962010B7745A
+                  registration_link: 'http://payouts.sandbox.payoneer.com/partners/lp.aspx?token=7293f06a1d524e6f80a4f0f414b0f0962010B7745A'
+            properties:
+              result:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    minLength: 1
+                  registration_link:
+                    type: string
+                    minLength: 1
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|3101|\tSome payout methods were not valid: Empty Value\n|3105|\tID Type must be SSN in US\n|3106|\tID Expiration Date is Invalid\n|3107|\tPassport Issue Date is Invalid\n|3108|\tID Type must not be SSN outside the US\n|3114|\tminimum age limit for the payee (company) not met\n|3115|\tminimum age limit for the payee (individual) not met\n|3119|\tInsufficient password complexity\n|3124|\tRe-register is not allowed for partial registration\n|3125|\tRe-register not allowed when token has not been used\n|3126|\tNot allowed in express mode\n"
+          examples:
+            Incorrect field value:
+              result:
+                registration_link: 'http://payouts.sandbox.payoneer.com/partners/lp.aspx?token=0dfda566e7a...a398bfca33cCB86AD124C'
+                token: 0dfda566e7a...a398bfca33cCB86AD124C
+                error_description: Please fill in a valid url address
+                error_details:
+                  code: 3101
+                  errors:
+                    - code: '0'
+                      target: redirect_url
+                      message: Please fill in a valid url address
+                    - code: '0'
+                      target: payee.contact.last_name
+                      message: Please fill in a valid last name
+            Missing Mandatory Field:
+              error: Bad request
+              error_description: There are multiple validation errors with input parameters
+              error_details:
+                code: 1000
+                target: parameters
+                errors:
+                  - code: 6
+                    target: payee_id
+                    message: Required
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                result:
+                  registration_link: 'http://payouts.sandbox.payoneer.com/partners/lp.aspx?token=0dfda566e7a...a398bfca33cCB86AD124C'
+                  token: 0dfda566e7a...a398bfca33cCB86AD124C
+                  error_description: Please fill in a valid url address
+                  error_details:
+                    code: 3101
+                    errors:
+                      - code: '0'
+                        target: redirect_url
+                        message: Please fill in a valid url address
+                      - code: '0'
+                        target: payee.contact.last_name
+                        message: Please fill in a valid last name
+            properties:
+              result:
+                type: object
+                required:
+                  - registration_link
+                  - token
+                  - error_description
+                  - error_details
+                properties:
+                  registration_link:
+                    type: string
+                    minLength: 1
+                  token:
+                    type: string
+                    minLength: 1
+                  error_description:
+                    type: string
+                    minLength: 1
+                  error_details:
+                    type: object
+                    required:
+                      - code
+                      - errors
+                    properties:
+                      code:
+                        type: integer
+                      errors:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              minLength: 1
+                            target:
+                              type: string
+                              minLength: 1
+                            message:
+                              type: string
+                              minLength: 1
+                          required:
+                            - code
+                            - target
+                            - message
+            required:
+              - result
+      x-stoplight:
+        id: POST_programs-program_id-payees-registration-link
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security:
+        - oauth2 - client credentials:
+            - read
+            - write
+  '/programs/{program_id}/masspayouts':
+    parameters:
+      - name: program_id
+        in: path
+        type: string
+        required: true
+    post:
+      operationId: submit-mass-payouts
+      summary: Submit Mass Payout
+      tags:
+        - Payouts
+      description: |
+        The **masspayouts** method is used to submit batches of up to 500 payout instructions to Payoneer’s system. Validation is performed asynchronously. The call to post masspayouts will fail in cases that any data elements in any of the instructions fails to conform to behavioral restrictions of the field. The post masspayouts call will not return a failure response in cases of insufficient funds, inactive payee ID or other issues resulting from validation of individual payments in the batch.
+
+        If your organization requires dual approval when performing payments, please contact [Payoneer Integration team](mailto:integration@payoneer.com). 
+
+        **To get notified on cancelled payments, clients must subscribe to the [cancel payout webhook](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2ODgz-cancel-payout). The webhook is triggered when a payment is cancelled due to an error in the data submitted.**
+
+
+        > **Notes**: 
+        > * Prior to issuing payout instructions, the client’s account on Payoneer’s platform must have a credit balance to cover the instructions requested. Payout instruction submission will fail if the client’s account balance has insufficient funds to perform the payout instruction. 
+        > * The payee ID must be active on Payoneer's platform. (The payee has successfully on-boarded Payoneer; see [payee on-boarding](/docs/mass-payouts-v4.html#/b3A6MzU2NzYyNDE-create-registration-link) section).
+        > * Clients can also optionally submit payouts via batch file (XML, CSV, or Excel file format) and upload the file from the Payoneer Administration Console.
+        > * The Client Reference ID field must be unique for each payout instruction. If a payout fails for any reason, the same Client reference ID should be used for reprocessing the same payout request. The response returns the *client_reference* id assigned to the payout.
+        > * In cases that an internal error (HTTP Status 5XX) is returned, the instruction can be resent with the same Client Reference ID - Payoneer's platform will reject the submission if the Client Reference ID already exists in our system.
+
+        > *In cases that a request is successful, the API returns a response "Payouts Created" with HTTP status 201. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              Payments:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    client_reference_id:
+                      type: string
+                      minLength: 1
+                      maxLength: 250
+                      pattern: '^[\w_\-\^\.\(\)@! \$: ]+$'
+                      description: |-
+                        A unique reference number that should be generated by the client and assigned to the payout. This ID may be used to query or update the relevant payout in the future.
+                        The field is NOT case sensitive.
+                    payee_id:
+                      type: string
+                      minLength: 1
+                      maxLength: 50
+                      pattern: '^[-_a-zA-Z0-9_\-\.\^@!\""]+(\s+[-_a-zA-Z0-9_\-\.\^@!\""]+)*$'
+                      description: A unique identifier of the payee set by the client. If the client is enabled in the Payoneer systems for the “Email as payee” service then the payee’s email can be used
+                    description:
+                      type: string
+                      minLength: 1
+                      maxLength: 250
+                      pattern: '^[a-zA-Z0-9\s\(\)/,\.\-@%!_:\$"''\+>]+$'
+                      description: Payout description.
+                    currency:
+                      type: string
+                      minLength: 3
+                      maxLength: 3
+                      pattern: '^[A-Z]{3}$'
+                      description: 'ISO3 currency code. The default value is the currency of the client’s program at Payoneer. If the payout should be in a different currency then this field should be submitted (3 letters, in accordance with ISO 4217)'
+                    amount:
+                      type: number
+                      description: The amount to be transfered to the payee in the submitted currency
+                    payout_date:
+                      type: string
+                      format: date
+                      pattern: YYYY-MM-DD
+                      description: 'Time of payout (EST). Clients must be configured on Payoneer’s platform for “Payouts scheduling” to support this feature. By default the specified date is ignored, and payouts are executed immediately upon payout submission. If appropriately configured, the payout would be executed only at the time specified by the “Payout date” parameter.'
+                    group_id:
+                      type: string
+                      description: Used for grouping payouts in the Admin Console (Supports attribution of payout to a department or expense group)
+                      maxLength: 250
+                      pattern: '^[a-zA-Z0-9\s]'
+                  required:
+                    - client_reference_id
+                    - payee_id
+                    - description
+                    - amount
+            required:
+              - Payments
+          x-examples:
+            application/json:
+              Payments:
+                - client_reference_id: payment_1
+                  payee_id: testa5d2f486
+                  description: Test_1256g1
+                  currency: USD
+                  amount: '2.0'
+                - client_reference_id: payment_2
+                  payee_id: testa5d2f483
+                  description: Test_1258g2
+                  currency: USD
+                  amount: '10.0'
+      responses:
+        '200':
+          description: ''
+          examples:
+            application/json:
+              result: Payments Created
+          schema:
+            description: ''
+            type: object
+            properties:
+              result:
+                type: string
+                minLength: 1
+            required:
+              - result
+            x-examples:
+              example-1:
+                result: Payments Created
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2305|\tThis endpoint is not enabled for dual approval|\n\n"
+          examples:
+            application/json:
+              error: Bad request
+              error_description: There are multiple validation errors with input parameters
+              error_details:
+                code: 1000
+                target: parameters
+                errors:
+                  - code: 3
+                    target: 'payments[0].amount'
+                    message: Please fill in a valid amount
+                    client_reference_id: testPaymentID0001_1
+                  - code: 1000
+                    target: 'payments[0].amount'
+                    message: The specified condition was not met for 'amount'.
+                    client_reference_id: testPaymentID0001_1
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Bad request
+                error_description: There are multiple validation errors with input parameters
+                error_details:
+                  code: 1000
+                  target: parameters
+                  errors:
+                    - code: 3
+                      target: 'payments[0].amount'
+                      message: Please fill in a valid amount
+                      client_reference_id: testPaymentID0001_1
+                    - code: 1000
+                      target: 'payments[0].amount'
+                      message: The specified condition was not met for 'amount'.
+                      client_reference_id: testPaymentID0001_1
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                  - target
+                  - errors
+                properties:
+                  code:
+                    type: integer
+                  target:
+                    type: string
+                    minLength: 1
+                  errors:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: integer
+                        target:
+                          type: string
+                          minLength: 1
+                        message:
+                          type: string
+                          minLength: 1
+                        client_reference_id:
+                          type: string
+                          minLength: 1
+                      required:
+                        - code
+                        - target
+                        - message
+                        - client_reference_id
+            required:
+              - error
+              - error_description
+              - error_details
+        '500':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2300|\tInternal Error|\n|2301|\tInternal Error|\n|2302|\tInternal Error|\n|2303|\tInternal Error|\n|2304|\tInternal Error|\n\n\n"
+          examples: {}
+      x-stoplight:
+        id: POST_programs-program_id-payouts
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      security:
+        - oauth2 - client credentials:
+            - write
+  '/programs/{program_id}/payees/{payee_id}/status':
+    parameters:
+      - name: program_id
+        in: path
+        description: A unique ID for the program that is provided to the client by Payoneer during setup.
+        required: true
+        type: string
+      - name: payee_id
+        in: path
+        description: Unique identifier of the payee established by the client.
+        required: true
+        type: string
+    get:
+      operationId: get-payee-status
+      summary: Get Payee Status
+      tags:
+        - Payee Management
+      description: "Returns the status of the requested payee on Payoneer’s platform.\n\n> **Notes**:\n> \n> * Subscribe to Payee Status notifications to receive automatic callback notifications whenever a payee is approved or declined on Payoneer’s platform. See [Webhooks](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjEy-approved) for more details.\n \n\n\n### Payee Statuses\n\n|**Payee Status** |\t**Status Code**\t|**Status Description**|\n|----------------|---------------------------------|-------------------------|\n|Active|\t1| \tPayee is approved, client can submit payouts to the payee|\n|Pending| 0|\tPayee is pending KYC review, currently payouts can not be submitted. If Payoneer requires further information from the payee for approval, it will be communicated as the reason in the response|\n|Inactive|\t99| \tPayee is declined, client cannot submit payouts to the payee |\n       \n\n*In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)\n"
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                properties:
+                  account_id:
+                    type: string
+                    description: Account ID is the same as Payoneer ID
+                  status:
+                    type: object
+                    properties:
+                      type:
+                        type: integer
+                      description:
+                        type: string
+                        description: Please refer to the above "Payee Status" table
+                      reasons:
+                        type: object
+                        description: Returns if payee is "Pending" or "Inactive"
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                reason_id:
+                                  type: integer
+                                reason_description:
+                                  type: string
+                                requirement_id:
+                                  type: integer
+                                requirement_description:
+                                  type: string
+                  registration_date:
+                    type: string
+                    description: The payee registration date
+                  payout_method:
+                    type: object
+                    description: The Payee's payout method
+                    properties:
+                      type:
+                        type: string
+          examples:
+            Active:
+              result:
+                account_id: '3676945'
+                status:
+                  type: 1
+                  description: Active
+                registration_date: '2021-05-05'
+                payout_method:
+                  type: BankTransfer
+            Pending KYC:
+              result:
+                account_id: '3743793'
+                status:
+                  type: 0
+                  description: Pending
+                  reasons:
+                    items:
+                      - reason_id: 21
+                        reason_description: It looks like you are living in a country that is not your country of nationality
+                        requirement_id: 113
+                        requirement_description: Submit a document that clearly shows your full name and address
+                      - reason_id: 21
+                        reason_description: It looks like you are living in a country that is not your country of nationality
+                        requirement_id: 112
+                        requirement_description: Update your address by completing the following form
+                registration_date: '2021-07-09'
+                payout_method:
+                  type: BankTransfer
+            Declined:
+              result:
+                account_id: '2651979'
+                status:
+                  type: 99
+                  description: InActive
+                  reasons:
+                    items:
+                      - reason_description: General account application decline (various reasons)
+                registration_date: '2019-01-31'
+                payout_method:
+                  type: DebitCard
+        '404':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2105|\tPayee does not exist\n"
+          examples:
+            application/json:
+              error: Not found
+              error_description: Payee does not exist
+              error_details:
+                code: 2105
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Not found
+                error_description: Payee does not exist
+                error_details:
+                  code: 2105
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                properties:
+                  code:
+                    type: integer
+            required:
+              - error
+              - error_description
+              - error_details
+      x-stoplight:
+        id: GET_programs-program_id-payees-payee_id-status
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      security:
+        - oauth2 - client credentials:
+            - read
+  '/programs/{program_id}/payouts/{client_reference_id}/status':
+    parameters:
+      - name: program_id
+        in: path
+        type: string
+        required: true
+      - name: client_reference_id
+        in: path
+        type: string
+        required: true
+    get:
+      operationId: get-payout-status
+      summary: Get Payout Status
+      tags:
+        - Payouts
+      description: "Retrieve the status of a previously submitted payout. The unique client-reference_id that was submitted on the original payout instruction is used to uniquely identify the payout instruction on Payoneer's platform.\n\n> **Notes**:\n> - In cases of failed payments, Payoneer does not create the payment and therefore a call to Get Payout Details API will return 10311 “Cannot find payout with the specified Client Reference ID”.\n> - Subscribe to Payout Status notifications to receive automatic callback notifications for monitoring the status of payments on the Payoneer platform. See \"**payout Status Notifications**\" webhook section for more details.\n> - Please refer to [Failed Bank Transfer Reason Codes](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI4-failed-transfer-codes) for reason descriptions in the case of failed bank transfers.\n> - Please refer to [Cancel Payment Reason Codes](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI5-cancel-payment-codes) for reason descriptions in the case of cancelled payments.\n> \n### Payout Statuses\n\n|**Payout Status** \t|**Status Category Description**|\n|----------------|-------------------------|\n|\tPending| \tPayout is in process|\n|Pending Payee|\tPayout is pending approval by the Payee. *In cases that user has to claim the funds by choosing load type.*|\n|\tTransferred|\tPayout has been transferred to the beneficiary Card/eWallet/bank”…  *Payment can still fail after being transferred if it fails to reach the beneficiary Bank account*| \n|\tCancelled|\tPayout has been cancelled. Funds have been returned to the client's Balance|\n\n\n*In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)\n"
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                properties:
+                  payout_date:
+                    type: string
+                    format: date-time
+                    description: Date-Time the payout was sent to Payoneer
+                  amount:
+                    type: number
+                    description: the payout amount
+                  currency:
+                    type: string
+                    minLength: 3
+                    maxLength: 3
+                    description: the payout currency
+                  status:
+                    type: string
+                    description: the current payout status
+                  target_amount:
+                    type: number
+                    description: payout amount in target currency if payout is in a different currency than the program currency
+                  target_currency:
+                    type: string
+                    minLength: 3
+                    maxLength: 3
+                    description: payout currency if payout is in a different currency than the program currency
+                  payee_id:
+                    type: string
+                    description: Unique identifier of the payee established by the client
+                  payout_id:
+                    type: string
+                    description: The unique ID of the payout in Payoneer system
+                  scheduled_payout_date:
+                    type: string
+                    format: date-time
+                    description: the date-time in which the payout is schedule to load
+                  load_date:
+                    type: string
+                    format: date-time
+                    description: 'if the payout was loaded, this parameter will show the date-time the payout was loaded to the payee'
+                  reason_code:
+                    type: integer
+                    description: 'reason code returned if bank rejects the Payment (Please refer to [Failed Bank Transfer Reason Codes](https://developer.payoneer.com/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI4-failed-transfer-codes) for reason descriptions in the case of failed bank transfers)'
+                  reason_description:
+                    type: string
+                    description: 'reason description returned if bank rejects the Payment (Please refer to [Failed Bank Transfer Reason Codes](https://developer.payoneer.com/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI4-failed-transfer-codes) for reason descriptions in the case of failed bank transfers)'
+                  cancel_reason_code:
+                    type: integer
+                    description: 'reason code if payout is cancelled (Please refer to [Cancel Payment Reason Codes](https://developer.payoneer.com/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI5-cancel-payment-codes) for reason descriptions in the case of cancelled payments)'
+                  cancel_reason_description:
+                    type: string
+                    description: 'reason description if payout is cancelled (Please refer to [Cancel Payment Reason Codes](https://developer.payoneer.com/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI5-cancel-payment-codes) for reason descriptions in the case of cancelled payments)'
+          examples:
+            application/json: |-
+              {
+                "result": {
+                  "payout_date": "2021-03-17T10:47:00-04:00",
+                  "amount": 5.10,
+                  "currency": "USD",
+                  "status": "Cancelled",
+                  "target_amount": 4.20,
+                  "target_currency": "EUR",
+                  "payee_id": "Test41234s1324",
+                  "payout_id": "1636595702",
+                  "scheduled_payout_date": "2021-04-30T00:00:00-04:00",
+              (if Status is Funded)
+                  "load_date": "2021-03-17T14:09:39.54-04:00",
+              (if Bank Rejects the Payment)
+                  "reason_code": 337,
+                  "reason_description": "Invalid branch code"}
+              (if Payment is cancelled)
+                  "cancel_reason_code": 30013,
+                  "cancel_reason_description": "Bank details - Invalid Branch Code"
+              }
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2306|\tPayout not found|\n"
+          examples:
+            application/json:
+              error: Not found
+              error_description: Payout not found
+              error_details:
+                code: 2306
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Not found
+                error_description: Payout not found
+                error_details:
+                  code: 2306
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                properties:
+                  code:
+                    type: integer
+            required:
+              - error
+              - error_description
+              - error_details
+      x-stoplight:
+        id: GET_programs-program_id-payouts-client_reference_id
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      security:
+        - oauth2 - client credentials:
+            - read
+      parameters:
+        - in: path
+          name: program_id
+          type: string
+          required: true
+          description: A unique ID for the program that is provided to the client by Payoneer during setup
+        - in: path
+          name: client_reference_id
+          type: string
+          required: true
+          description: Unique payment ID assigned by the client and submitted on the payouts request
+          maxLength: 1
+          minLength: 50
+          pattern: '^[\w_\-\^\.\(\)@! \$: ]+$'
+  '/programs/{program_id}/balance':
+    parameters:
+      - name: program_id
+        in: path
+        type: string
+        required: true
+    get:
+      operationId: query-program-balance
+      summary: Query Program Balance
+      tags:
+        - Utility
+      description: |-
+        Returns the client’s available program balance.
+
+
+        *In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [General Error Codes.](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                    description: the client's program balance
+                  currency:
+                    type: string
+                    description: the client's account currency - 3 letter iso code
+                  fees_due:
+                    type: number
+                    description: the fees owed by the client to Payoneer
+          examples:
+            application/json:
+              result:
+                balance: 9325627.69
+                currency: USD
+                fees_due: 65283.48
+        '500':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|9999|\tInternal Error|\n"
+      x-stoplight:
+        id: GET_programs-program_id-balance
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      security:
+        - oauth2 - client credentials:
+            - read
+      parameters:
+        - in: path
+          name: program_id
+          type: string
+          required: true
+          description: A unique ID for the program that is provided to the client by Payoneer during setup
+  '/programs/{program_id}/payouts/{client_reference_id}/cancel':
+    parameters:
+      - name: program_id
+        in: path
+        description: A unique ID for the program that is provided to the client by Payoneer during setup.
+        required: true
+        type: string
+      - name: client_reference_id
+        in: path
+        description: |
+          Unique payment ID assigned by the client and submitted on the payouts request.
+        required: true
+        type: string
+    put:
+      operationId: cancel-payout
+      summary: Cancel Payout
+      tags:
+        - Payouts
+      description: |
+        Cancel a payout that has been previously submitted but not yet processed and delivered to the payee. The unique client-reference_id that was submitted on the original payout instruction is used to uniquely identify the payout instruction on Payoneer's platform.
+
+
+        > * The response returns the unique *Payoneer Payout ID* assigned to the payout on Payoneer’s platform.
+        > * Cancel Payout call is idempotent.
+        > 
+        *In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above.* See [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                properties:
+                  status_description:
+                    type: string
+                  date_updated:
+                    type: string
+                    format: date-time
+          examples:
+            application/json:
+              result:
+                status_description: Cancelled
+                date_updated: '2021-11-23T16:36:33.000Z'
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2310|\tPayout not found\n|2312|\tPayout already processed\n|2313|\tPayout already declined\n|2314|\tPayout already processed\n|2315|\tPayout already processed\n"
+          examples:
+            application/json:
+              error: Bad request
+              error_description: Payout not found
+              error_details:
+                code: 2310
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Bad request
+                error_description: Payout not found
+                error_details:
+                  code: 2310
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                properties:
+                  code:
+                    type: integer
+            required:
+              - error
+              - error_description
+              - error_details
+        '500':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2308|\tInternal Error|\n|2311|\tInternal Error"
+      x-stoplight:
+        id: POST_programs-program_id-payouts-client_reference_id-cancel
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      parameters:
+        - in: path
+          name: program_id
+          type: string
+          required: true
+          description: A unique ID for the program that is provided to the client by Payoneer during setup
+        - in: path
+          name: client_reference_id
+          type: string
+          required: true
+          description: The ID of the payout in Payoneer's systems
+      security:
+        - oauth2 - client credentials:
+            - read
+            - write
+  '/programs/{program_id}/payout-methods/bank/account-types/{payee_type}/countries/{country}/currencies/{currency}':
+    get:
+      responses:
+        '200':
+          description: |
+            **Success**
+
+            **Field Attributes:**
+            |**Attribute**|**Description**|
+            |-------------|--------------|
+            | min_length | Minimum Length of the field’s value|
+            | max_legnth | Maximum Length of the field’s value|
+            | regex | Regular Expression for validation of the field’s value|
+            | required | Is the field required or not (“True” / “False”)|
+            | watermark | Digital watermark|
+            | description | Description of specific bank fields
+            | list | Contains a list of items
+            | dependent_list_items | The list depends on a specific value on another attribute
+            | options_contains_other | Allows free text from the list item (“True” / “False”)
+            | dependent_options_contains_others | Allows free text from the dependent list item (“True” / “False”)
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                result:
+                  payout_method:
+                    type: bank
+                    country: AD
+                    currency: EUR
+                    bank_account_type: Individual
+                    fields:
+                      items:
+                        - field_name: BankName
+                          field_id: 1
+                          field_type: Text
+                          label: Bank Name
+                          description: ''
+                          watermark: e.g. State Bank
+                          required: true
+                          min_length: 0
+                          max_length: 35
+                          regex: '^[\.\(\)a-zA-Z0-9 &]+$'
+                          options_contains_other: false
+                          dependent_options_contains_others: false
+                        - field_name: AccountName
+                          field_id: 2
+                          field_type: Text
+                          label: Account Holder Name
+                          description: 'Full name of the official bank account holder. Latin characters only, no symbols allowed.'
+                          watermark: e.g. John Smith
+                          required: true
+                          min_length: 0
+                          max_length: 70
+                          regex: '^[a-zA-Z0-9& ]+$'
+                          options_contains_other: false
+                          dependent_options_contains_others: false
+                        - field_name: Swift
+                          field_id: 4
+                          field_type: Text
+                          label: BIC
+                          description: '<a href="http://www.swift.com/bsl/facelets/bicsearch.faces" target="_blank">Click here</a> to find your SWIFT/BIC'
+                          watermark: e.g. ABCDESBBXXX
+                          required: true
+                          min_length: 8
+                          max_length: 11
+                          regex: '^([A-Z]{4})([A-Z0-9]{4}|[A-Z0-9]{7})$'
+                          options_contains_other: false
+                          dependent_options_contains_others: false
+                        - field_name: IBAN
+                          field_id: 7
+                          field_type: Text
+                          label: IBAN
+                          description: <ul><li>IBAN should include 24 characters.</li><li>3rd and 4th characters must be digits.</li></ul>
+                          watermark: e.g. AD12 00012030200359100100
+                          required: true
+                          min_length: 24
+                          max_length: 70
+                          regex: '^[A-Z]{2}\d{2}([ ]?[A-Z0-9]){20}$'
+                          options_contains_other: false
+                          dependent_options_contains_others: false
+            properties:
+              result:
+                type: object
+                required:
+                  - payout_method
+                properties:
+                  payout_method:
+                    type: object
+                    required:
+                      - type
+                      - country
+                      - currency
+                      - bank_account_type
+                      - fields
+                    properties:
+                      type:
+                        type: string
+                        minLength: 1
+                      country:
+                        type: string
+                        minLength: 1
+                      currency:
+                        type: string
+                        minLength: 1
+                      bank_account_type:
+                        type: string
+                        minLength: 1
+                      fields:
+                        type: object
+                        required:
+                          - items
+                        properties:
+                          items:
+                            type: array
+                            uniqueItems: true
+                            minItems: 1
+                            items:
+                              type: object
+                              properties:
+                                field_name:
+                                  type: string
+                                  minLength: 1
+                                field_id:
+                                  type: integer
+                                field_type:
+                                  type: string
+                                  minLength: 1
+                                label:
+                                  type: string
+                                  minLength: 1
+                                description:
+                                  type: string
+                                watermark:
+                                  type: string
+                                  minLength: 1
+                                required:
+                                  type: boolean
+                                min_length:
+                                  type: integer
+                                max_length:
+                                  type: integer
+                                regex:
+                                  type: string
+                                  minLength: 1
+                                options_contains_other:
+                                  type: boolean
+                                dependent_options_contains_others:
+                                  type: boolean
+                              required:
+                                - field_name
+                                - field_id
+                                - field_type
+                                - label
+                                - description
+                                - watermark
+                                - required
+                                - min_length
+                                - max_length
+                                - regex
+                                - options_contains_other
+                                - dependent_options_contains_others
+            required:
+              - result
+          examples:
+            application/json:
+              result:
+                payout_method:
+                  type: bank
+                  country: AD
+                  currency: EUR
+                  bank_account_type: Individual
+                  fields:
+                    items:
+                      - field_name: BankName
+                        field_id: 1
+                        field_type: Text
+                        label: Bank Name
+                        description: ''
+                        watermark: e.g. State Bank
+                        required: true
+                        min_length: 0
+                        max_length: 35
+                        regex: '^[\.\(\)a-zA-Z0-9 &]+$'
+                        options_contains_other: false
+                        dependent_options_contains_others: false
+                      - field_name: AccountName
+                        field_id: 2
+                        field_type: Text
+                        label: Account Holder Name
+                        description: 'Full name of the official bank account holder. Latin characters only, no symbols allowed.'
+                        watermark: e.g. John Smith
+                        required: true
+                        min_length: 0
+                        max_length: 70
+                        regex: '^[a-zA-Z0-9& ]+$'
+                        options_contains_other: false
+                        dependent_options_contains_others: false
+                      - field_name: Swift
+                        field_id: 4
+                        field_type: Text
+                        label: BIC
+                        description: '<a href="http://www.swift.com/bsl/facelets/bicsearch.faces" target="_blank">Click here</a> to find your SWIFT/BIC'
+                        watermark: e.g. ABCDESBBXXX
+                        required: true
+                        min_length: 8
+                        max_length: 11
+                        regex: '^([A-Z]{4})([A-Z0-9]{4}|[A-Z0-9]{7})$'
+                        options_contains_other: false
+                        dependent_options_contains_others: false
+                      - field_name: IBAN
+                        field_id: 7
+                        field_type: Text
+                        label: IBAN
+                        description: <ul><li>IBAN should include 24 characters.</li><li>3rd and 4th characters must be digits.</li></ul>
+                        watermark: e.g. AD12 00012030200359100100
+                        required: true
+                        min_length: 24
+                        max_length: 70
+                        regex: '^[A-Z]{2}\d{2}([ ]?[A-Z0-9]){20}$'
+                        options_contains_other: false
+                        dependent_options_contains_others: false
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n3101\tInvalid processor type"
+          examples:
+            application/json:
+              error: Bad request
+              error_description: There are multiple validation errors with input parameters
+              error_details:
+                code: 1000
+                target: parameters
+                errors:
+                  - code: 3101
+                    message: Invalid processor type mpesa
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Bad request
+                error_description: There are multiple validation errors with input parameters
+                error_details:
+                  code: 1000
+                  target: parameters
+                  errors:
+                    - code: 3101
+                      message: Invalid processor type mpesa
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                  - target
+                  - errors
+                properties:
+                  code:
+                    type: integer
+                  target:
+                    type: string
+                    minLength: 1
+                  errors:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: integer
+                        message:
+                          type: string
+                          minLength: 1
+                      required:
+                        - code
+                        - message
+            required:
+              - error
+              - error_description
+              - error_details
+      summary: Determine required banking fields
+      operationId: bank-registration-fields
+      tags:
+        - On-boarding Payees
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: language
+          type: string
+          description: 'Client can specify the language of the label, description and watermark'
+          enum:
+            - en
+            - he
+            - ru
+            - zh
+            - tr
+            - pt
+            - es
+            - hu
+            - fr
+            - fi
+            - el
+            - ms
+            - de
+            - ja
+            - ko
+            - pl
+            - da
+            - ar
+            - it
+            - vi
+            - sv
+            - th
+            - in
+            - nl
+            - 'no'
+          maxLength: 2
+          minLength: 2
+        - in: path
+          name: payee_type
+          type: string
+          required: true
+          default: INDIVIDUAL
+          description: |
+            Type of the Bank Account:
+            Permitted values: “INDIVIDUAL”, “COMPANY”
+          enum:
+            - INDIVIDUAL
+            - COMPANY
+        - in: path
+          name: country
+          type: string
+          required: true
+          description: |-
+            Bank account country.
+            Two letters, in compliance with ISO 3166-1 alpha-2 Country Code List.
+          maxLength: 2
+          minLength: 2
+        - in: path
+          name: currency
+          type: string
+          required: true
+          description: |
+            The ISO3 Currency code of the payee's bank account. 
+            (3 letters, in accordance with ISO 4217)
+          maxLength: 3
+          minLength: 3
+      description: |-
+        Request to determine fields required for submitting a payee’s bank account information for a given country, currency, and account type (individual/company). 
+
+
+
+        > * Refer to [Field Validations](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI2-field-validations) in the referencesection. 
+
+
+        *In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above. See* [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      x-stoplight:
+        id: GET_programs-program_id-api-version
+        beforeScript: null
+        afterScript: null
+        public: true
+        mock:
+          statusCode: 200
+          dynamic: false
+          enabled: false
+      security:
+        - oauth2 - client credentials:
+            - read
+    parameters:
+      - name: program_id
+        in: path
+        type: string
+        required: true
+      - name: payee_type
+        in: path
+        type: string
+        required: true
+      - name: country
+        in: path
+        type: string
+        required: true
+      - name: currency
+        in: path
+        type: string
+        required: true
+  '/programs/{program_id}/transfer':
+    parameters:
+      - type: string
+        name: program_id
+        in: path
+        required: true
+    post:
+      summary: Transfer Funds
+      operationId: transfer-funds
+      responses:
+        '200':
+          description: OK
+          examples:
+            like-to-like:
+              result:
+                date_time: '2022-02-10T14:59:32.6502065Z'
+                funding_request_id: 20647
+                source_currency: USD
+                source_amount: 1000
+                target_currency: USD
+                target_amount: 1000
+            Transfer with different currency:
+              result:
+                date_time: '2022-02-16T19:50:29.3145816Z'
+                funding_request_id: 20679
+                quote: '5899134'
+                base_rate: 0.860636
+                source_currency: USD
+                source_amount: 1000
+                target_currency: EUR
+                target_amount: 860.64
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                result:
+                  date_time: '2022-02-16T19:50:29.3145816Z'
+                  funding_request_id: 20679
+                  quote: '5899134'
+                  base_rate: 0.860636
+                  source_currency: USD
+                  source_amount: 1000
+                  target_currency: EUR
+                  target_amount: 860.64
+            properties:
+              result:
+                type: object
+                required:
+                  - date_time
+                  - funding_request_id
+                  - quote
+                  - base_rate
+                  - source_currency
+                  - source_amount
+                  - target_currency
+                  - target_amount
+                properties:
+                  date_time:
+                    type: string
+                    minLength: 1
+                  funding_request_id:
+                    type: integer
+                  quote:
+                    type: string
+                    minLength: 1
+                  base_rate:
+                    type: number
+                  source_currency:
+                    type: string
+                    minLength: 3
+                    maxLength: 3
+                  source_amount:
+                    type: number
+                  target_currency:
+                    type: string
+                    minLength: 3
+                    maxLength: 3
+                  target_amount:
+                    type: number
+            required:
+              - result
+        '400':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2201|\tSource Program and Target Program must both exist|\n|2202|\tTarget Program does not belong to the same Transfer Funds Group|\n|2207|\tInsufficient balance to complete transfer |\n|2215|  Transfer amount is not valid for given exchange |"
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                error: Bad request
+                error_description: Target Program does not belong to the same Transfer Funds Group
+                error_details:
+                  code: 2202
+            properties:
+              error:
+                type: string
+                minLength: 1
+              error_description:
+                type: string
+                minLength: 1
+              error_details:
+                type: object
+                required:
+                  - code
+                properties:
+                  code:
+                    type: integer
+            required:
+              - error
+              - error_description
+              - error_details
+          examples:
+            application/json:
+              error: Bad request
+              error_description: Target Program does not belong to the same Transfer Funds Group
+              error_details:
+                code: 2202
+        '500':
+          description: "|**Error code**|**Description**|\n|-------------|--------------|\n|2218|\tInternal Error |\n|2219|\tInternal Error |"
+          schema:
+            type: object
+            properties: {}
+      description: |-
+        The Transfer Funds API call will allow a Payoneer partner to transfer the available balance from one program to another.
+
+        >"**date-time**" in the response is the date/time we received the request, not the date/time the transfer was made. The request may take up to 20 minutes to be processed. Clients should look for the [Account Funded Webhook](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjIw-account-funded) to know when the transfer takes place.
+
+        *In cases that a request is successful, the API returns a response with HTTP status 200. In cases of failed requests, the API returns a response with HTTP status of 400 or above. See* [**General Error Codes.**](/docs/mass-payouts-v4.html#/ZG9jOjM1Njc2MjI1-common-error-messages)
+      parameters:
+        - in: body
+          name: body
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                target_partner_id: '123123123'
+                amount: '1000'
+                description: test
+            properties:
+              target_partner_id:
+                type: string
+                minLength: 1
+              amount:
+                type: number
+              description:
+                type: string
+                minLength: 1
+            required:
+              - target_partner_id
+              - amount
+              - description
+          x-examples:
+            application/json:
+              target_partner_id: '123123123'
+              amount: '1000'
+              description: test transfer
+      tags:
+        - Utility
+      security:
+        - oauth2 - client credentials:
+            - read
+            - write
+definitions: {}
+securityDefinitions:
+  oauth2 - client credentials:
+    type: oauth2
+    flow: application
+    tokenUrl: 'https://login.sandbox.payoneer.com/api/v2/oauth2/token'
+    scopes:
+      read: read
+      write: write
+      openid: openid
+      personal-details: personal-details
+tags:
+  - name: On-boarding Payees
+    description: |-
+      Clients can choose between two alternate API methods for on-boarding payees:
+      1. login-link – used to request an unique URL for connecting an existing Payoneer account holder to the client.
+      2. registration-link – used to request an unique URL for on-boarding a payee and providing data elements for pre-populating fields in the payee registration form presented by Payoneer.
+  - name: Payee Management
+    description: Methods for retrieving the status of a payee and for moving payees between Payoneer programs.
+  - name: Payouts
+    description: 'Methods for initiating a payout, retreiving payout details and cancelling a payout.'
+  - name: Payee Reports
+    description: 'Methods for retreiving registration and payout information for a single payee and reporting of global payee activity. '
+  - name: Utility
+    description: Includes methods for retreiving the current APIU version and for retreiving the client's current financial balance.
