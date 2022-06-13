@@ -1,8 +1,6 @@
 # image-test
 
-Updatesssssss
-
-More updatesssssss
+Update #1
 
 The beginning of an awesome article...
 
