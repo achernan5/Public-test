@@ -1,7 +1,5 @@
 {
-  "name": "Github",
   "description": "",
-  "spectralExtends": [],
   "formats": [
     "oas2",
     "oas3",
@@ -9,6 +7,5 @@
     "oas3.1"
   ],
   "aliases": {},
-  "rules": {},
-  "extendedDefault": true
+  "rules": {}
 }
